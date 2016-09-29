@@ -7,3 +7,33 @@
 # remove unrequired webcp icons (all except those named)
 cd /var/www/images
 find . -type f ! -name "adminer.png" ! -name "shell.png" ! -name "tab.png" ! -name "webmin.png" -delete
+
+#install repository configuration package
+cd ../..
+wget http://repo.zabbix.com/zabbix/3.0/debian/pool/main/z/zabbix-release/zabbix-release_3.0-1+jessie_all.deb
+dpkg -i zabbix-release_3.0-1+jessie_all.deb
+apt-get update
+
+#install Zabbix packages
+apt-get install zabbix-server-mysql zabbix-frontend-php
+
+#create initial database
+mysql -uroot
+create database zabbix character set utf8 collate utf8_bin;
+grant all privileges on zabbix.* to zabbix@localhost identified by 'zabbix';
+quit;
+
+#import inital schema and data
+cd /usr/share/doc/zabbix-server-mysql
+zcat create.sql.gz | mysql -uroot zabbix
+
+#need to edit database configuration in /etc/zabbix/zabbix_server.conf
+
+#start Zabbix server process
+service zabbix-server start
+
+#need to edit the PHP configuration for Zabbix frontend /etc/apache2/conf-enabled/zabbix.conf
+#need to uncomment the “date.timezone” setting and set the correct timezone
+
+#restart the apache web server
+service apache2 restart
